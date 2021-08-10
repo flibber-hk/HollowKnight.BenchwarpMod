@@ -13,7 +13,7 @@ using TMPro;
 
 namespace Benchwarp
 {
-    public class Benchwarp : Mod, ITogglableMod,IGlobalSettings<GlobalSettings>,ILocalSettings<SaveSettings>
+    public class Benchwarp : Mod, ITogglableMod,IGlobalSettings<GlobalSettings>,ILocalSettings<SaveSettings>,IMenuMod
     {
 
         internal static Benchwarp instance;
@@ -346,6 +346,34 @@ namespace Benchwarp
                 );
             }
         }
+
+        #region Menu
+        public List<IMenuMod.MenuEntry> GetMenuData(IMenuMod.MenuEntry? toggleButtonEntry)
+        {
+            List<IMenuMod.MenuEntry> menuEntries = new List<IMenuMod.MenuEntry>();
+
+            foreach (FieldInfo fi in typeof(GlobalSettings).GetFields())
+            {
+                if (fi.FieldType == typeof(bool))
+                {                    
+                    if (fi.GetCustomAttribute<MenuToggleable>() is MenuToggleable mt)
+                    {
+                        menuEntries.Add(new IMenuMod.MenuEntry()
+                        {
+                            Name = mt.name,
+                            Description = mt.description,
+                            Values = new string[] { "Off", "On" },
+                            Saver = opt => { fi.SetValue(globalSettings, opt == 1); TopMenu.RebuildMenu(); },
+                            Loader = () => (bool)fi.GetValue(globalSettings) ? 1 : 0
+                        });
+                    }
+                }
+            }
+
+            return menuEntries;
+        }
+        public bool ToggleButtonInsideMenu => false;
+        #endregion
 
         public void Unload()
         {
