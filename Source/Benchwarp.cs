@@ -13,25 +13,20 @@ using TMPro;
 
 namespace Benchwarp
 {
-    public class Benchwarp : Mod, ITogglableMod
+    public class Benchwarp : Mod, ITogglableMod,IGlobalSettings<GlobalSettings>,ILocalSettings<SaveSettings>
     {
 
         internal static Benchwarp instance;
 
         internal GameObject UIObj;
-        internal GlobalSettings globalSettings = new GlobalSettings();
-        internal SaveSettings saveSettings = new SaveSettings();
-        public override ModSettings GlobalSettings 
-        { 
-            get => globalSettings; 
-            set => globalSettings = value as GlobalSettings; 
-        }
 
-        public override ModSettings SaveSettings 
-        { 
-            get => saveSettings; 
-            set => saveSettings = value as SaveSettings; 
-        }
+        public static SaveSettings saveSettings { get; set; } = new SaveSettings();
+        public void OnLoadLocal(SaveSettings s) => saveSettings = s;
+        public SaveSettings OnSaveLocal() => saveSettings;
+
+        public static GlobalSettings globalSettings { get; set; } = new GlobalSettings();
+        public void OnLoadGlobal(GlobalSettings s) => globalSettings = s;
+        public GlobalSettings OnSaveGlobal() => globalSettings;
 
         public Benchwarp()
         {
@@ -55,15 +50,15 @@ namespace Benchwarp
             UIObj.AddComponent<GUIController>();
             GameObject.DontDestroyOnLoad(UIObj);
 
-            ModHooks.Instance.SetPlayerBoolHook += BenchWatcher;
-            ModHooks.Instance.ApplicationQuitHook += SaveGlobalSettings;
+            ModHooks.SetPlayerBoolHook += BenchWatcher;
+            ModHooks.ApplicationQuitHook += SaveGlobalSettings;
 
-            ModHooks.Instance.GetPlayerStringHook += RespawnAtDeployedBench;
-            ModHooks.Instance.SetPlayerStringHook += RemoveRespawnFromDeployedBench;
+            ModHooks.GetPlayerStringHook += RespawnAtDeployedBench;
+            ModHooks.SetPlayerStringHook += RemoveRespawnFromDeployedBench;
 
             GUIController.Instance.BuildMenus();
             
-            if (Benchwarp.instance.saveSettings.benchDeployed && GameManager.instance.sceneName == Benchwarp.instance.saveSettings.benchScene)
+            if (Benchwarp.saveSettings.benchDeployed && GameManager.instance.sceneName == Benchwarp.saveSettings.benchScene)
             {
                 BenchMaker.MakeBench();
             }
@@ -238,52 +233,52 @@ namespace Benchwarp
             GameManager.instance.ui.AudioGoToGameplay(.2f);
         }
 
-        public void BenchWatcher(string target, bool val)
+        public bool BenchWatcher(string target, bool val)
         {
             if (target == "atBench" && val)
             {
                 foreach (Bench bench in Bench.Benches)
                 {
                     if (bench.benched) bench.visited = true;
-                    else if (GameManager.instance.sceneName == bench.sceneName && Benchwarp.instance.saveSettings.benchScene != bench.sceneName) bench.visited = true;
+                    else if (GameManager.instance.sceneName == bench.sceneName && Benchwarp.saveSettings.benchScene != bench.sceneName) bench.visited = true;
                     else continue;
                     break;
                 }
             }
-            PlayerData.instance.SetBoolInternal(target, val);
+            return val;
         }
 
-        private void RemoveRespawnFromDeployedBench(string stringName, string value)
+        private string RemoveRespawnFromDeployedBench(string stringName, string value)
         {
             switch (stringName)
             {
                 case nameof(PlayerData.respawnMarkerName):
                     if (value != BenchMaker.DEPLOYED_BENCH_RESPAWN_MARKER_NAME)
                     {
-                        Benchwarp.instance.saveSettings.atDeployedBench = false;
+                        Benchwarp.saveSettings.atDeployedBench = false;
                     }
                     break;
                 case nameof(PlayerData.respawnScene):
-                    if (value != Benchwarp.instance.saveSettings.benchScene)
+                    if (value != Benchwarp.saveSettings.benchScene)
                     {
-                        Benchwarp.instance.saveSettings.atDeployedBench = false;
+                        Benchwarp.saveSettings.atDeployedBench = false;
                     }
                     break;
             }
-            PlayerData.instance.SetStringInternal(stringName, value);
+            return value;
         }
 
-        private string RespawnAtDeployedBench(string stringName)
+        private string RespawnAtDeployedBench(string stringName, string res)
         {
-            if (!Benchwarp.instance.saveSettings.atDeployedBench) return PlayerData.instance.GetStringInternal(stringName);
+            if (!Benchwarp.saveSettings.atDeployedBench) return PlayerData.instance.GetStringInternal(stringName);
             switch (stringName)
             {
                 case nameof(PlayerData.respawnMarkerName):
                     return BenchMaker.DEPLOYED_BENCH_RESPAWN_MARKER_NAME;
                 case nameof(PlayerData.respawnScene):
-                    return Benchwarp.instance.saveSettings.benchScene;
+                    return Benchwarp.saveSettings.benchScene;
                 default:
-                    return PlayerData.instance.GetStringInternal(stringName);
+                    return res;
             }
         }
 
@@ -354,11 +349,11 @@ namespace Benchwarp
 
         public void Unload()
         {
-            ModHooks.Instance.SetPlayerBoolHook -= BenchWatcher;
-            ModHooks.Instance.ApplicationQuitHook -= SaveGlobalSettings;
+            ModHooks.SetPlayerBoolHook -= BenchWatcher;
+            ModHooks.ApplicationQuitHook -= SaveGlobalSettings;
 
-            ModHooks.Instance.GetPlayerStringHook -= RespawnAtDeployedBench;
-            ModHooks.Instance.SetPlayerStringHook -= RemoveRespawnFromDeployedBench;
+            ModHooks.GetPlayerStringHook -= RespawnAtDeployedBench;
+            ModHooks.SetPlayerStringHook -= RemoveRespawnFromDeployedBench;
 
             On.GameManager.OnNextLevelReady -= FixRespawnType;
 

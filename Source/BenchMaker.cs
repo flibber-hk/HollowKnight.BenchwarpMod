@@ -86,12 +86,12 @@ namespace Benchwarp
         private static GameObject _blackBench;
         private static GameObject BlackBench => GameObject.Instantiate(_blackBench);
 
-        public static string Style => reducedPreload ? preloadedStyle : Benchwarp.instance.globalSettings.benchStyle;
+        public static string Style => reducedPreload ? preloadedStyle : Benchwarp.globalSettings.benchStyle;
 
         public static void SetInitialSettings()
         {
-            noPreload = Benchwarp.instance.globalSettings.NoPreload;
-            reducedPreload = Benchwarp.instance.globalSettings.ReducePreload;
+            noPreload = Benchwarp.globalSettings.NoPreload;
+            reducedPreload = Benchwarp.globalSettings.ReducePreload;
         }
 
         private static bool noPreload;
@@ -137,7 +137,7 @@ namespace Benchwarp
             if (objects == null || noPreload) return; //happens if mod is reloaded
             if (reducedPreload)
             {
-                preloadedStyle = Benchwarp.instance.globalSettings.benchStyle;
+                preloadedStyle = Benchwarp.globalSettings.benchStyle;
                 if (objects.TryGetValue("Fungus1_24", out var dict) && dict.TryGetValue("guardian_bench", out var guardianSprite))
                 {
                     dict.Remove("guardian_bench");
@@ -184,7 +184,7 @@ namespace Benchwarp
 
         private static Vector3 GetAdjust()
         {
-            string style = reducedPreload ? preloadedStyle : Benchwarp.instance.globalSettings.benchStyle;
+            string style = reducedPreload ? preloadedStyle : Benchwarp.globalSettings.benchStyle;
             switch (style)
             {
                 default:
@@ -212,20 +212,20 @@ namespace Benchwarp
             if (ExtraSprite != null) GameObject.Destroy(ExtraSprite);
 
             if (DontDeleteData) return;
-            Benchwarp.instance.saveSettings.benchDeployed = false;
-            Benchwarp.instance.saveSettings.atDeployedBench = false;
+            Benchwarp.saveSettings.benchDeployed = false;
+            Benchwarp.saveSettings.atDeployedBench = false;
         }
 
         public static void MakeBench()
         {
-            if (!Benchwarp.instance.saveSettings.benchDeployed) return;
+            if (!Benchwarp.saveSettings.benchDeployed) return;
 
-            Vector3 position = new Vector3(Benchwarp.instance.saveSettings.benchX, Benchwarp.instance.saveSettings.benchY, 0.02f) + GetAdjust();
+            Vector3 position = new Vector3(Benchwarp.saveSettings.benchX, Benchwarp.saveSettings.benchY, 0.02f) + GetAdjust();
 
             if (noPreload)
             {
                 GameObject marker = new GameObject();
-                marker.transform.position = new Vector3(Benchwarp.instance.saveSettings.benchX, Benchwarp.instance.saveSettings.benchY, 7.4f);
+                marker.transform.position = new Vector3(Benchwarp.saveSettings.benchX, Benchwarp.saveSettings.benchY, 7.4f);
                 marker.tag = "RespawnPoint";
                 marker.name = DEPLOYED_BENCH_RESPAWN_MARKER_NAME;
                 marker.SetActive(true);
@@ -238,7 +238,7 @@ namespace Benchwarp
             }
             else
             {
-                switch (Benchwarp.instance.globalSettings.benchStyle)
+                switch (Benchwarp.globalSettings.benchStyle)
                 {
                     default:
                     case "Right":
@@ -326,13 +326,13 @@ namespace Benchwarp
                 ExtraSprite.SetActive(true);
             }
             else if (reducedPreload) { }
-            else if (Benchwarp.instance.globalSettings.benchStyle == "Garden")
+            else if (Benchwarp.globalSettings.benchStyle == "Garden")
             {
                 ExtraSprite = GuardianSprite;
                 ExtraSprite.transform.position = position + new Vector3(0f, -0.4f, -0.2f);
                 ExtraSprite.SetActive(true);
             }
-            else if (Benchwarp.instance.globalSettings.benchStyle == "Camp")
+            else if (Benchwarp.globalSettings.benchStyle == "Camp")
             {
                 ExtraSprite = CampSprite;
                 ExtraSprite.transform.position = position + new Vector3(0f, -0.5f, 0f);
@@ -341,7 +341,7 @@ namespace Benchwarp
             DeployedBench.SetActive(true);
             DeployedBench.name = DEPLOYED_BENCH_RESPAWN_MARKER_NAME;
 
-            if (Benchwarp.instance.globalSettings.Noninteractive)
+            if (Benchwarp.globalSettings.Noninteractive)
             {
                 var actions = DeployedBench.LocateMyFSM("Bench Control").FsmStates.First(s => s.Name == "Idle").Actions.ToList();
                 actions.RemoveAt(1); // never recognizes player as being in range
@@ -359,7 +359,7 @@ namespace Benchwarp
 
         public static void TryToDeploy(Scene arg0, Scene arg1)
         {
-            if (Benchwarp.instance.saveSettings.benchDeployed && arg1.name == Benchwarp.instance.saveSettings.benchScene)
+            if (Benchwarp.saveSettings.benchDeployed && arg1.name == Benchwarp.saveSettings.benchScene)
             {
                 MakeBench();
             }

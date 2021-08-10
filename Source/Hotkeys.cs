@@ -13,7 +13,7 @@ namespace Benchwarp
         {
             foreach (var defaultBind in DefaultHotkeys)
             {
-                if (!Benchwarp.instance.globalSettings.HotkeyOverrides.TryGetValue(defaultBind.Key, out var mappedHotkey))
+                if (!Benchwarp.globalSettings.HotkeyOverrides.TryGetValue(defaultBind.Key, out var mappedHotkey))
                 {
                     mappedHotkey = defaultBind.Key;
                 }
